@@ -23,7 +23,7 @@ getLyricMap xs = generateLyricMap (concat (map Song.reduceToLyrics xs))
 
 foldLyrics :: Map String [Word.Word] -> (String, Word.Word) -> Map String [Word.Word]
 foldLyrics m (key, word) = case val of Nothing -> Map.insert key [word] m
-                                             Just val -> Map.insert key (handleSameSong val word) m
+                                       Just val -> Map.insert key (handleSameSong val word) m
                         where val = Map.lookup key m
 
 -- Handes collisions on a word node, appends positions if the same node is already present, adds a new node if the same node is not present.
