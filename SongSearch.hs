@@ -14,9 +14,9 @@ run = do
     return (songs, lyrics)
 
 searchLyric :: ([Song.Song], Map String [Word.Word]) -> String -> String
-searchLyric (songs, lyrics) q = case val of Nothing -> "The query was not found"
-                                            Just val -> show val
-                                where   val = Map.lookup q lyrics 
+searchLyric (songs, lyrics) query = case val of Nothing -> "The query was not found!\n"
+                                                Just val -> Song.normalizeLyricResults songs val 
+                                where   val = Map.lookup query lyrics 
 
 getLyricMap :: [Song.Song] -> Map String [Word.Word]
 getLyricMap xs = generateLyricMap (concat (map Song.reduceToLyrics xs))

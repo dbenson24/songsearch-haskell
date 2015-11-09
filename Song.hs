@@ -1,4 +1,4 @@
-module Song(Song (..), parseSong, reduceToLyrics) where 
+module Song(Song (..), parseSong, reduceToLyrics, normalizeLyricResults) where 
     import qualified Data.List.Split as Split
     import qualified Word
     import Data.List
@@ -21,3 +21,18 @@ module Song(Song (..), parseSong, reduceToLyrics) where
 
     reduceToLyrics :: Song.Song -> [(String, Word.Word)]
     reduceToLyrics song = parseLyrics (Song.words song) (Song.id song)
+    
+    normalizeLyricResults :: [Song.Song] -> [Word.Word] -> String
+    normalizeLyricResults songs words = concat (map (getContexts songs) words)
+    
+    getContexts :: [Song.Song] -> Word.Word -> String
+    getContexts songs word = concat (map (getContext song) (Word.positions word)) 
+                    where   sid = Word.songid word
+                            song = songs !! sid
+    getContext :: Song.Song -> Int -> String
+    getContext song loc =   intercalate " " [lyrics !! i | i <- range] ++ "\n"
+                    where   lowest = loc - 5
+                            highest = loc + 5
+                            range = [lowest .. highest]
+                            lyrics = Song.words song
+                    
