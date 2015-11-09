@@ -7,7 +7,6 @@ import Data.List
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-
 run = do
     s <- L.readFile "rick_db.txt"
     let songs = map parseSong (Split.splitOn "<BREAK>\n" (C.unpack s))
@@ -26,10 +25,19 @@ parseLyrics xs sid = [(word, Word.Word{Word.word=word, Word.songid=sid, Word.pos
 
 generate :: Map String [Word.Word] -> (String, Word.Word) -> Map String [Word.Word]
 generate m (key, word) = case val of Nothing -> Map.insert key [word] m
-                                     val -> m
+                                     Just val -> Map.insert key (handleSameSong val word) m
                         where val = Map.lookup key m
-                        
+
+-- Handes collisions on a word node, appends positions if the same node is already present, adds a new node if the same node is not present.
+handleSameSong :: [Word.Word] -> Word.Word -> [Word.Word]
+handleSameSong node word =  if val == sid
+                                then (Word.Word{Word.word=(Word.word x), Word.songid=sid, Word.positions=(Word.positions word ++ Word.positions x)}:xs)
+                                else (word:node)
+                            where (x:xs) = node
+                                  val = Word.songid x
+                                  sid = Word.songid word
                         
 testWord = Word.Word{Word.word="Test", Word.songid=1, Word.positions=[1,2,4,5]}
+testWord' = Word.Word{Word.word="Test", Word.songid=1, Word.positions=[6,7,8]}
 testKey = Word.word testWord
 testTuple = (testKey, testWord)
