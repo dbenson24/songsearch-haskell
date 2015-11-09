@@ -9,23 +9,21 @@ import qualified Data.Map as Map
 
 run = do
     s <- L.readFile "rick_db.txt"
-    let songs = map parseSong (Split.splitOn "<BREAK>\n" (C.unpack s))
-    return songs
+    let songs = map Song.parseSong (zip [0..] (Split.splitOn "<BREAK>\n" (C.unpack s)))
+    let lyrics = getLyricMap songs
+    return (songs, lyrics)
 
-parseSong :: String -> Song.Song
-parseSong "" = Song.Song{Song.title="", Song.id=(-1), Song.artist="", Song.words=[""]}
-parseSong text = Song.Song{Song.title=title, Song.id=0, Song.artist=artist, Song.words=lyrics} 
-        where (artist:title:rest) = Split.splitOn "\n" text
-              lyrics = Split.splitOn " " (intercalate " " rest)
-              
-              
-parseLyrics :: [String] -> Int -> [(String, Word.Word)]
-parseLyrics [] sid = []
-parseLyrics xs sid = [(word, Word.Word{Word.word=word, Word.songid=sid, Word.positions=[i]}) | (i, word) <- zip [0..] xs]
+searchLyric :: ([Song.Song], Map String [Word.Word]) -> String -> String
+searchLyric (songs, lyrics) q = case val of Nothing -> "The query was not found"
+                                            Just val -> show val
+                                where   val = Map.lookup q lyrics 
 
-generate :: Map String [Word.Word] -> (String, Word.Word) -> Map String [Word.Word]
-generate m (key, word) = case val of Nothing -> Map.insert key [word] m
-                                     Just val -> Map.insert key (handleSameSong val word) m
+getLyricMap :: [Song.Song] -> Map String [Word.Word]
+getLyricMap xs = foldLyrics (concat (map Song.reduceToLyrics xs))
+
+generateLyricMap :: Map String [Word.Word] -> (String, Word.Word) -> Map String [Word.Word]
+generateLyricMap m (key, word) = case val of Nothing -> Map.insert key [word] m
+                                             Just val -> Map.insert key (handleSameSong val word) m
                         where val = Map.lookup key m
 
 -- Handes collisions on a word node, appends positions if the same node is already present, adds a new node if the same node is not present.
@@ -36,8 +34,21 @@ handleSameSong node word =  if val == sid
                             where (x:xs) = node
                                   val = Word.songid x
                                   sid = Word.songid word
-                        
+
+foldLyrics :: [(String, Word.Word)] -> Map String [Word.Word]
+foldLyrics xs = foldl generateLyricMap Map.empty xs
+
+
+
+
+
+
+
 testWord = Word.Word{Word.word="Test", Word.songid=1, Word.positions=[1,2,4,5]}
 testWord' = Word.Word{Word.word="Test", Word.songid=1, Word.positions=[6,7,8]}
-testKey = Word.word testWord
-testTuple = (testKey, testWord)
+testWord'' = Word.Word{Word.word="Hello", Word.songid=1, Word.positions=[6,7,8]}
+testTuple = (Word.word testWord, testWord)
+testTuple' = (Word.word testWord', testWord')
+testTuple'' = (Word.word testWord'', testWord'')
+
+tupleList = [testTuple, testTuple', testTuple'']
