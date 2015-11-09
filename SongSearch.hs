@@ -19,10 +19,10 @@ searchLyric (songs, lyrics) q = case val of Nothing -> "The query was not found"
                                 where   val = Map.lookup q lyrics 
 
 getLyricMap :: [Song.Song] -> Map String [Word.Word]
-getLyricMap xs = foldLyrics (concat (map Song.reduceToLyrics xs))
+getLyricMap xs = generateLyricMap (concat (map Song.reduceToLyrics xs))
 
-generateLyricMap :: Map String [Word.Word] -> (String, Word.Word) -> Map String [Word.Word]
-generateLyricMap m (key, word) = case val of Nothing -> Map.insert key [word] m
+foldLyrics :: Map String [Word.Word] -> (String, Word.Word) -> Map String [Word.Word]
+foldLyrics m (key, word) = case val of Nothing -> Map.insert key [word] m
                                              Just val -> Map.insert key (handleSameSong val word) m
                         where val = Map.lookup key m
 
@@ -35,8 +35,8 @@ handleSameSong node word =  if val == sid
                                   val = Word.songid x
                                   sid = Word.songid word
 
-foldLyrics :: [(String, Word.Word)] -> Map String [Word.Word]
-foldLyrics xs = foldl generateLyricMap Map.empty xs
+generateLyricMap :: [(String, Word.Word)] -> Map String [Word.Word]
+generateLyricMap xs = foldl foldLyrics Map.empty xs
 
 
 
