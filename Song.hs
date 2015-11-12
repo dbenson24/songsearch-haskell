@@ -5,22 +5,22 @@ module Song(Song (..), parseSong, reduceToLyrics, normalizeLyricResults) where
     data Song = Song { 
                         title :: String,
                         artist :: String,
-                        words :: [String],
+                        lyrics :: [String],
                         id :: Int
                     } deriving (Show)
                     
     parseSong :: (Int, String) -> Song.Song
-    parseSong (sid, "") = Song.Song{Song.title="", Song.id=(-1), Song.artist="", Song.words=[""]}
+    parseSong (sid, "") = Song.Song{Song.title="", Song.id=(-1), Song.artist="", Song.lyrics=[""]}
     parseSong (sid, text) = Song.Song title artist lyrics sid
             where (artist:title:rest) = Split.splitOn "\n" text
-                  lyrics = Split.splitOn " " (intercalate " " rest)
+                  lyrics = words (intercalate " " rest)
                   
     parseLyrics :: [String] -> Int -> [(String, Word.Word)]
     parseLyrics [] sid = []
     parseLyrics xs sid = [(word, Word.Word{Word.word=word, Word.songid=sid, Word.positions=[i]}) | (i, word) <- zip [0..] xs]
 
     reduceToLyrics :: Song.Song -> [(String, Word.Word)]
-    reduceToLyrics song = parseLyrics (Song.words song) (Song.id song)
+    reduceToLyrics song = parseLyrics (Song.lyrics song) (Song.id song)
     
     normalizeLyricResults :: [Song.Song] -> [Word.Word] -> String
     normalizeLyricResults songs words = concat (map (getContexts songs) words)
@@ -31,8 +31,12 @@ module Song(Song (..), parseSong, reduceToLyrics, normalizeLyricResults) where
                             song = songs !! sid
     getContext :: Song.Song -> Int -> String
     getContext song loc =   intercalate " " [lyrics !! i | i <- range] ++ "\n"
-                    where   lowest = loc - 5
-                            highest = loc + 5
+                    where   lyrics = Song.lyrics song
+                            lowest = if loc < 5
+                                        then 0
+                                        else loc - 5
+                            highest = if loc + 5 >= length lyrics
+                                        then (length lyrics) - 1
+                                        else loc + 5
                             range = [lowest .. highest]
-                            lyrics = Song.words song
                     

@@ -12,11 +12,22 @@ run = do
     let songs = map Song.parseSong (zip [0..] (Split.splitOn "<BREAK>\n" (C.unpack s)))
     let lyrics = getLyricMap songs
     return (songs, lyrics)
+    
+main = do
+    db <- run
+    contents <- getContents
+    mapM_ (answerQuery db) $ lines contents
+
+answerQuery :: ([Song.Song], Map String [Word.Word]) -> String -> IO()
+answerQuery db line = do 
+                        putStr (searchLyric db line)
+                        
 
 searchLyric :: ([Song.Song], Map String [Word.Word]) -> String -> String
-searchLyric (songs, lyrics) query = case val of Nothing -> "The query was not found!\n"
+searchLyric (songs, lyrics) input = case val of Nothing -> "The query was not found!\n"
                                                 Just val -> Song.normalizeLyricResults songs val 
-                                where   val = Map.lookup query lyrics 
+                                where   query = [x | x <- input, x `elem` ['a'..'z'] || x `elem` ['A'..'Z']]
+                                        val = Map.lookup query lyrics
 
 getLyricMap :: [Song.Song] -> Map String [Word.Word]
 getLyricMap xs = generateLyricMap (concat (map Song.reduceToLyrics xs))
@@ -37,12 +48,6 @@ handleSameSong node word =  if val == sid
 
 generateLyricMap :: [(String, Word.Word)] -> Map String [Word.Word]
 generateLyricMap xs = foldl foldLyrics Map.empty xs
-
-
-
-
-
-
 
 testWord = Word.Word{Word.word="Test", Word.songid=1, Word.positions=[1,2,4,5]}
 testWord' = Word.Word{Word.word="Test", Word.songid=1, Word.positions=[6,7,8]}
